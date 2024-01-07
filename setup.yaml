@@ -45,10 +45,12 @@
        ocpus: 1
        memory_in_gbs: 6
     create_vnic_details:
-        assign_public_ip: True
+        assign_public_ip: False
+        assign_private_dns_record: true
         hostname_label: "{{ instance_hostname }}"
-        subnet_id: "ocid1.subnet.oc1.ap-hyderabad-1.aaaaaaaaxab4sf35bv47o7jqkmx6ck2r3m2fgplafquo3luv5y6obkpggaea"
-        private_ip: '10.0.0.25'
+#        subnet_id: "ocid1.subnet.oc1.ap-hyderabad-1.aaaaaaaaxab4sf35bv47o7jqkmx6ck2r3m2fgplafquo3luv5y6obkpggaea"
+        subnet_id: "ocid1.subnet.oc1.ap-hyderabad-1.aaaaaaaa3zzrstaskdc2goeshkt3b7qlclqcfyit7xfumnnlvswv7zo3lc5a"
+        private_ip: '10.0.1.25'
     metadata:
         ssh_authorized_keys: "{{ lookup('file',  my_test_public_key ) }}"
   register: result
@@ -70,16 +72,16 @@
     id: "{{ result.vnic_attachments[0].vnic_id }}"
   register: result
 - set_fact:
-    instance_public_ip: "{{result.vnic.public_ip}}"
+    instance_private_ip: "{{result.vnic.private_ip}}"
 
 - name: Print the public ip of the newly launched instance
   debug:
-    msg: "Public IP of launched instance {{ instance_public_ip }}"
+    msg: "Public IP of launched instance {{ instance_private_ip }}"
 
 - name: Wait (upto 5 minutes) for port 22 to become open
   wait_for:
     port: 22
-    host: '{{ instance_public_ip }}'
+    host: '{{ instance_private_ip }}'
     state: started
     delay: 10
   vars:
@@ -88,7 +90,7 @@
 - set_fact:
     # Use "opc" user as this is an OL image
     # Disable SSH's strict host key checking just for this one command invocation
-    common_ssh_args: '-o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i {{ temp_certificates_path }}/private_key.pem opc@{{ instance_public_ip }}'
+    common_ssh_args: '-o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i {{ temp_certificates_path }}/private_key.pem opc@{{ instance_private_ip }}'
 
 - name: Attempt a ssh connection to the newly launced instance
   # Use "opc" user as this is an OL image
